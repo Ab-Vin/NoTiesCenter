@@ -17,7 +17,7 @@ const options = {
 };
 
 function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
-    if (Platform === 'CSSE') {
+    if (Targets === 'CSSE') {
         const dirPath = path.join(config.dirname, 'ComputerScience/SoftwareEngineer');
 
         readUserDirectories(dirPath)
@@ -29,7 +29,7 @@ function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
                             files.forEach(file => {
                                 const deviceToken = file.content.trim();
                                 sendiOSNotification(deviceToken, Title, Subtitle, Body);
-                                console.log(`Sent a notification to ${deviceToken} the user ${userDir}`);
+                                console.log(`Sending a notification to the user with the ID ${userDir}...`);
                             });
                         })
                         .catch(err => {

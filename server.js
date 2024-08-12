@@ -47,7 +47,10 @@ const server = http.createServer((req, res) => {
                 if (key.startsWith('SendNotificationsTo'))
                 {
                     sendNotification('IOS', value, 'CSCE 102', '004', 'اقترب وقت المحاضرة', Date.now() + 5);
-                    
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'text/plain');
+                    res.end('Successfully sent the notification to the person/group ' + value);
+                    return;
                 }
             }
 
