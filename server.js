@@ -1,11 +1,11 @@
-const http = require('http');
+﻿const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const querystring = require('querystring');
 const { StringDecoder } = require('string_decoder');
 const config = require('./config');
-const { sendiOSNotification } = require('./notifications');
+const { NotificationsManager } = require('./notifications');
 const { checkOrder, fileExists } = require('./utils');
 
 const server = http.createServer((req, res) => {
@@ -43,6 +43,10 @@ const server = http.createServer((req, res) => {
                         });
                     });
                     return;
+                }
+                if (key.startsWith('SendNotificationsTo'))
+                {
+                    NotificationsManager.sendNotification('IOS', value, 'CSCE 102', '004', 'اقترب وقت المحاضرة', Date.now() + 5);
                 }
             }
 
