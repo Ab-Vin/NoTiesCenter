@@ -1,10 +1,10 @@
 const apn = require('apn');
-const config = require('./config');
-const schedule = require('node-schedule');
+const fs = require('fs');
 const path = require('path');
-const { scheduler } = require('timers/promises');
-
-const authKey = require('fs').readFileSync(config.authKeyPath);
+const schedule = require('node-schedule');
+const config = require('./config');
+const { readUserDirectories, readFilesInDirectory } = require('./utils');
+const authKey = fs.readFileSync(config.authKeyPath);
 
 const options = {
     token: {
@@ -17,67 +17,33 @@ const options = {
 };
 
 function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
-    switch (Targets) {
-        case 'CSSE':
-            const directoryPath = path.join(config.dirname, 'ComputerScience/SoftwareEngineer');
+    if (Platform === 'CSSE') {
+        const dirPath = path.join(config.dirname, 'ComputerScience/SoftwareEngineer');
 
-            const readDirectoryFiles = (dirPath) => {
-                return new Promise((resolve, reject) => {
-                    fs.readdir(dirPath, (err, files) => {
-                        if (err) {
-                            return reject(err);
-                        }
-
-                        
-                        const filePromises = files
-                            .map(file => path.join(dirPath, file)) 
-                            .filter(filePath => fs.statSync(filePath).isFile())
-                            .map(filePath => {
-                                return new Promise((resolve, reject) => {
-                                    fs.readFile(filePath, 'utf8', (err, data) => {
-                                        if (err) {
-                                            return reject(err);
-                                        }
-
-                                        const directory = path.dirname(filePath);
-                                        const fileName = path.basename(filePath);
-                                        resolve({
-                                            content: data,
-                                            directory: directory,
-                                            fileName: fileName
-                                        });  
-                                    });
-                                });
+        readUserDirectories(dirPath)
+            .then(userDirs => {
+                userDirs.forEach(userDir => {
+                    const userDirPath = path.join(dirPath, userDir);
+                    readFilesInDirectory(userDirPath)
+                        .then(files => {
+                            files.forEach(file => {
+                                const deviceToken = file.content.trim();
+                                sendiOSNotification(deviceToken, Title, Subtitle, Body);
+                                console.log(`Sent a notification to ${deviceToken} the user ${userDir}`);
                             });
-
-                        Promise.all(filePromises)
-                            .then(results => resolve(results)) 
-                            .catch(reject);
-                    });
+                        })
+                        .catch(err => {
+                            console.error(`Error reading files in directory ${userDir}:`, err);
+                        });
                 });
-            };
-
-            const logEachContent = (files) => {
-                files.forEach((file, index) => {
-                    schedule.scheduleJob(date, sendiOSNotification(file.content, Title, Subtitle, Body));
-                    console.log(`Sent a scheduled notification to ${file.fileName}`);
-                });
-            };
-
-            readDirectoryFiles(directoryPath)
-                .then(files => {
-                    logEachContent(files);
-                })
-                .catch(err => {
-                    console.error('Error reading directory files:', err);
-                });
-            break;
-    }
-    if (Platform == 'IOS') {
-        schedule.scheduleJob(date, sendiOSNotification(Title, Subtitle, Body)
+            })
+            .catch(err => {
+                console.error('Error reading user directories:', err);
+            });
+    } else if (Platform === 'IOS') {
+        sendiOSNotification(Targets, Title, Subtitle, Body);
     }
 }
-
 function sendiOSNotification(Target, Title, Subtitle, Body) {
     const apnProvider = new apn.Provider(options);
     const notification = new apn.Notification();
@@ -100,4 +66,4 @@ function sendiOSNotification(Target, Title, Subtitle, Body) {
         });
 }
 
-module.exports = { sendiOSNotification };
+module.exports = { sendNotification };
