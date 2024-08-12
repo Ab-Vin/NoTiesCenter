@@ -161,6 +161,7 @@ const server = http.createServer((req, res) => {
                                 res.end('Error creating directories');
                                 return;
                             }
+                        })
                     }
 
                     // If file does not exist, create it
