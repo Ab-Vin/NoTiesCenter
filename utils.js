@@ -1,5 +1,30 @@
 const path = require('path');
 const fs = require('fs');
+const config = require('./config');
+
+function getDeviceTokenFromID(ID) {
+    readUserDirectories(config.dirname)
+        .then(userDirs => {
+            userDirs.forEach(userDir => {
+                const userDirPath = path.join(config.dirname, userDir);
+                readFilesInDirectory(userDirPath)
+                    .then(files => {
+                        files.forEach(file => {
+                            if (ID == userDir)
+                            return file.content.trim();
+                        });
+                    })
+                    .catch(err => {
+                        console.error(`Error reading files in directory ${userDir}:`, err);
+                    });
+            });
+        })
+        .catch(err => {
+            console.error('Error reading user directories:', err);
+        });
+    console.warn('Could not find the ID ' + ID + '.');
+    return null;
+}
 
 function readUserDirectories(dirPath) {
     return new Promise((resolve, reject) => {
@@ -53,4 +78,4 @@ function fileExists(filePath, callback) {
     });
 }
 
-module.exports = { checkOrder, fileExists, readFilesInDirectory, readUserDirectories };
+module.exports = { checkOrder, fileExists, readFilesInDirectory, readUserDirectories, getDeviceTokenFromID };

@@ -6,7 +6,7 @@ const querystring = require('querystring');
 const { StringDecoder } = require('string_decoder');
 const config = require('./config');
 const { sendNotification } = require('./notifications');
-const { checkOrder, fileExists } = require('./utils');
+const { checkOrder, fileExists, getDeviceTokenFromID } = require('./utils');
 
 const server = http.createServer((req, res) => {
     if (req.method === 'GET') {
@@ -16,40 +16,25 @@ const server = http.createServer((req, res) => {
         if (query) {
             const queryParams = querystring.parse(query);
 
+            const Section = queryParams['Section'] || 'Unknown';
+
             for (const key in queryParams) {
                 const value = queryParams[key];
-                if (key.startsWith('CS/SW/getdevicetoken')) {
-                    const filePath = path.join(config.dirname, 'ComputerScience/SoftwareEngineer', value, 'DeviceToken.json');
-
-                    fileExists(filePath, (err, exists) => {
-                        if (err || !exists) {
-                            res.statusCode = 404;
-                            res.setHeader('Content-Type', 'text/plain');
-                            res.end('File not found');
-                            return;
-                        }
-
-                        fs.readFile(filePath, 'utf8', (err, data) => {
-                            if (err) {
-                                res.statusCode = 500;
-                                res.setHeader('Content-Type', 'text/plain');
-                                res.end('Error reading file');
-                                return;
-                            }
-
-                            res.statusCode = 200;
-                            res.setHeader('Content-Type', 'text/plain');
-                            res.end(data);
-                        });
-                    });
-                    return;
-                }
-                if (key.startsWith('SendNotificationsTo'))
-                {
-                    sendNotification('IOS', value, 'CSCE 102', '004', 'اقترب وقت المحاضرة', Date.now() + 5);
+                if (key.startsWith('SendNotificationsToGroup')) {
+                    sendNotification('IOS', value, 'CSCE 102', Section, 'اقترب وقت المحاضرة', Date.now() + 5);
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'text/plain');
-                    res.end('Successfully sent the notification to the person/group ' + value);
+                    res.end('Successfully sent the notification to the group ' + value + ' Section ' + Section);
+                    return;
+                }
+                else if (key.startsWith('SendNotificationToUser')) {
+                    const DeviceToken = getDeviceTokenFromID(value);
+                    if (DeviceToken != null) {
+                        sendNotification('IOS', DeviceToken, 'CSCE 102', '004', 'اقترب وقت المحاضرة', Date.now() + 5);
+                        res.statusCode = 200;
+                        res.setHeader('Content-Type', 'text/plain');
+                        res.end('Successfully sent the notification to the person with the ID ' + value);
+                    }
                     return;
                 }
             }

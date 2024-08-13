@@ -6,6 +6,11 @@ const config = require('./config');
 const { readUserDirectories, readFilesInDirectory } = require('./utils');
 const authKey = fs.readFileSync(config.authKeyPath);
 
+const presetDeviceToken = '';
+const presetTitle = '';
+const presetSubtitle = '';
+const presetBody = '';
+
 const options = {
     token: {
         key: authKey,
@@ -28,7 +33,13 @@ function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
                         .then(files => {
                             files.forEach(file => {
                                 const deviceToken = file.content.trim();
-                                sendiOSNotification(deviceToken, Title, Subtitle, Body);
+
+                                presetDeviceToken = deviceToken;
+                                presetTitle = Title;
+                                presetSubtitle = Subtitle;
+                                presetBody = Body;
+
+                                schedule.scheduleJob(date, sendiOSNotification());
                                 console.log(`Sending a notification to the user with the ID ${userDir}...`);
                             });
                         })
@@ -41,19 +52,25 @@ function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
                 console.error('Error reading user directories:', err);
             });
     } else if (Platform === 'IOS') {
-        sendiOSNotification(Targets, Title, Subtitle, Body);
+
+        presetDeviceToken = Targets;
+        presetTitle = Title;
+        presetSubtitle = Subtitle;
+        presetBody = Body;
+
+        schedule.scheduleJob(date, sendiOSNotification());
     }
 }
-function sendiOSNotification(Target, Title, Subtitle, Body) {
+function sendiOSNotification() {
     const apnProvider = new apn.Provider(options);
     const notification = new apn.Notification();
 
-    notification.alert = { title: Title, subtitle: Subtitle, body: Body };
+    notification.alert = { title: presetTitle, subtitle: presetSubtitle, body: presetBody };
     notification.badge = 1;
     notification.sound = 'null';
     notification.topic = config.bundleId;
 
-    apnProvider.send(notification, Target)
+    apnProvider.send(notification, presetDeviceToken)
         .then(result => {
             if (result.failed.length > 0) {
                 console.error('Failed to send notification:', result.failed);
