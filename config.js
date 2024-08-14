@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-    authKeyPath: 'C:/Users/Administrator/Desktop/NoTiesCenter-master/AuthKey_9S9S28TW59.p8',
+    authKeyPath: 'C:/Users/Administrator/Desktop/NoTiesNotificationCenter-master/AuthKey_9S9S28TW59.p8',
     dirname: '/Users/Administrator/Desktop/NoTiesDatabase/Students/Male/',
     keyid: '9S9S28TW59',
     teamid: 'ZPF5K5D3V4',

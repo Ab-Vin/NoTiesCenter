@@ -1,29 +1,131 @@
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs').promises;
 const config = require('./config');
 
-function getDeviceTokenFromID(ID) {
-    readUserDirectories(config.dirname)
-        .then(userDirs => {
-            userDirs.forEach(userDir => {
-                const userDirPath = path.join(config.dirname, userDir);
-                readFilesInDirectory(userDirPath)
-                    .then(files => {
-                        files.forEach(file => {
-                            if (ID == userDir)
-                            return file.content.trim();
-                        });
-                    })
-                    .catch(err => {
-                        console.error(`Error reading files in directory ${userDir}:`, err);
+function FindDeviceTokensForGroup(startDir) {
+    return fs.readdir(startDir, { withFileTypes: true })
+        .then(files => {
+            let promises = files.map(file => {
+                const filePath = path.join(startDir, file.name);
+
+                if (file.isDirectory()) {
+                    return FindDeviceTokensForGroup(filePath);
+                } else if (file.name === 'DeviceToken.json') {
+                    return fs.readFile(filePath, 'utf8').then(content => {
+                        return [{ path: filePath, content: content }];
+                    });
+                }
+                return Promise.resolve([]);
+            });
+
+            // Flatten the results from all promises
+            return Promise.all(promises).then(results => {
+                return results.flat();
+            });
+        });
+}
+
+function findFolderByName(directoryPath, ID) {
+    return fs.readdir(directoryPath)
+        .then(files => {
+            const searchPromises = files.map(file => {
+                const filePath = path.join(directoryPath, file);
+                return fs.stat(filePath)
+                    .then(stats => {
+                        if (stats.isDirectory()) {
+                            if (file === ID) {
+                                return filePath;
+                            }
+                            return findFolderByName(filePath, ID);
+                        }
+                        return null;
                     });
             });
+            return Promise.all(searchPromises)
+                .then(results => {
+                    return results.find(result => result !== null);
+                });
         })
         .catch(err => {
-            console.error('Error reading user directories:', err);
+            console.error('Error:', err);
+            return null;
         });
-    console.warn('Could not find the ID ' + ID + '.');
-    return null;
+}
+
+function readFilesInDirectory(directoryPath) {
+    return fs.readdir(directoryPath)
+        .then(files => {
+            const fileDetailsPromises = files.map(file => {
+                const filePath = path.join(directoryPath, file);
+                return fs.stat(filePath)
+                    .then(stats => {
+                        if (stats.isFile()) {
+                            return fs.readFile(filePath, 'utf8')
+                                .then(content => ({ name: file, content }));
+                        }
+                        return null; // Skip directories
+                    });
+            });
+            return Promise.all(fileDetailsPromises).then(fileDetails => fileDetails.filter(Boolean));
+        })
+        .catch(err => {
+            console.error('Error reading directory:', err);
+            throw err; // Ensure the promise is rejected
+        });
+}
+
+function getDeviceTokenFromID(ID) {
+    return findUserByID(ID)
+        .then(pathFound => {
+            if (!pathFound) {
+                console.warn('User not found');
+                return null;
+            }
+
+            return readFilesInDirectory(pathFound)
+                .then(files => {
+                    for (const file of files) {
+                        if (file.name === 'DeviceToken.json') {
+                            return file.content.trim(); // Return the device token
+                        }
+                    }
+
+                    console.warn('DeviceToken.json file not found');
+                    return null;
+                });
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            throw err; // Ensure the promise is rejected
+        });
+}
+
+function findUserByID(ID) {
+    return fs.readdir(config.dirname)
+        .then(files => {
+            const searchPromises = files.map(file => {
+                const filePath = path.join(config.dirname, file);
+                return fs.stat(filePath)
+                    .then(stats => {
+                        if (stats.isDirectory()) {
+                            if (file === ID) {
+                                return filePath;
+                            }
+                            return findFolderByName(filePath, ID); // Assuming findFolderByName returns a promise
+                        }
+                        return null;
+                    });
+            })
+            return Promise.all(searchPromises)
+                .then(results => {
+                    // Find the first non-null result
+                    return results.find(result => result !== null);
+                });
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            return null; // Handle errors and return null
+        });
 }
 
 function readUserDirectories(dirPath) {
@@ -33,28 +135,6 @@ function readUserDirectories(dirPath) {
 
             const userDirs = entries.filter(entry => fs.statSync(path.join(dirPath, entry)).isDirectory());
             resolve(userDirs);
-        });
-    });
-}
-
-function readFilesInDirectory(dirPath) {
-    return new Promise((resolve, reject) => {
-        fs.readdir(dirPath, (err, files) => {
-            if (err) return reject(err);
-
-            const filePromises = files.map(file => {
-                return new Promise((resolve, reject) => {
-                    const filePath = path.join(dirPath, file);
-                    fs.readFile(filePath, 'utf8', (err, data) => {
-                        if (err) return reject(err);
-                        resolve({ content: data, fileName: file });
-                    });
-                });
-            });
-
-            Promise.all(filePromises)
-                .then(results => resolve(results))
-                .catch(reject);
         });
     });
 }
@@ -78,4 +158,9 @@ function fileExists(filePath, callback) {
     });
 }
 
-module.exports = { checkOrder, fileExists, readFilesInDirectory, readUserDirectories, getDeviceTokenFromID };
+function hasMoreThanOneKey(obj) {
+    const keys = Object.keys(obj);
+    return keys.length > 1;
+}
+
+module.exports = { checkOrder, fileExists, readFilesInDirectory, readUserDirectories, getDeviceTokenFromID, hasMoreThanOneKey, FindDeviceTokensForGroup };
