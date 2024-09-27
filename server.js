@@ -25,7 +25,11 @@ const server = http.createServer((req, res) => {
         req.on('end', () => {
             body += decoder.end();
 
-            HandleRequest(req, ID, body, dateOfNotification);
+            let resp = HandleRequest(req, ID, body, dateOfNotification);
+
+            res.statusCode = resp.statusCode;
+            res.setHeader(resp.Header);
+            res.end(resp.end);
         });
     } else {
         res.statusCode = 405;

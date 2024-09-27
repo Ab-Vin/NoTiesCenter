@@ -26,14 +26,24 @@ function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
                     sendiOSNotification(file.content, Title, Subtitle, Body);
                 });
                 console.log('Successfully sent the notification to all the people under the group ' + Targets);
+                return res = {
+                    statusCode: 200,
+                    Header: ['Content-Type', 'text/plain'],
+                    end: 'Successfully sent the notification to all the people under the group ' + Targets
+                };
             }); 
         }).catch(err => {
             console.error('Error: ', err);
+            return res = {
+                statusCode: 400,
+                Header: ['Content-Type', 'text/plain'],
+                end: 'Error' + err
+            };
         });
         
     } else if (Platform === 'IOS') {
         schedule.scheduleJob(date, function () {
-            sendiOSNotification(Targets, Title, Subtitle, Body);
+            return sendiOSNotification(Targets, Title, Subtitle, Body);
         });
     }
 }
@@ -50,12 +60,27 @@ function sendiOSNotification(Target, Title, Subtitle, Body) {
         .then(result => {
             if (result.failed.length > 0) {
                 console.error('Failed to send notification:', result.failed);
+                return res = {
+                    statusCode: 400,
+                    Header: ['Content-Type', 'text/plain'],
+                    end: 'Failed to send notification: ' + result.failed
+                };
             } else {
                 console.log('Notification sent successfully.');
+                return res = {
+                    statusCode: 200,
+                    Header: ['Content-Type', 'text/plain'],
+                    end: 'Successfully sent the notification.'
+                };
             }
         })
         .catch(error => {
             console.error('Error sending notification:', error);
+            return res = {
+                statusCode: 400,
+                Header: ['Content-Type', 'text/plain'],
+                end: 'Error sending notification: ' + error
+            };
         });
 }
 
