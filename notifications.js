@@ -17,6 +17,11 @@ const options = {
 };
 
 function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
+    let resp = {
+        statusCode: 404,
+        Header: ['Content-Type', 'text/plain'],
+        end: 'Bad Request'
+    };
     if (Targets === 'CSSE') {
         const dirPath = path.join(config.dirname, 'ComputerScience/SoftwareEngineer');
 
@@ -26,7 +31,7 @@ function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
                     sendiOSNotification(file.content, Title, Subtitle, Body);
                 });
                 console.log('Successfully sent the notification to all the people under the group ' + Targets);
-                return resp = {
+                resp = {
                     statusCode: 200,
                     Header: ['Content-Type', 'text/plain'],
                     end: 'Successfully sent the notification to all the people under the group ' + Targets
@@ -34,7 +39,7 @@ function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
             }); 
         }).catch(err => {
             console.error('Error: ', err);
-            return resp = {
+            resp = {
                 statusCode: 400,
                 Header: ['Content-Type', 'text/plain'],
                 end: 'Error' + err
@@ -43,11 +48,18 @@ function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
         
     } else if (Platform === 'IOS') {
         schedule.scheduleJob(date, function () {
-            return sendiOSNotification(Targets, Title, Subtitle, Body);
+            sendiOSNotification(Targets, Title, Subtitle, Body);
         });
     }
+    return resp;
 }
 function sendiOSNotification(Target, Title, Subtitle, Body) {
+    let resp = {
+        statusCode: 404,
+        Header: ['Content-Type', 'text/plain'],
+        end: 'Bad Request'
+    };
+
     const apnProvider = new apn.Provider(options);
     const notification = new apn.Notification();
 
@@ -60,14 +72,14 @@ function sendiOSNotification(Target, Title, Subtitle, Body) {
         .then(result => {
             if (result.failed.length > 0) {
                 console.error('Failed to send notification:', result.failed);
-                return resp = {
+                resp = {
                     statusCode: 400,
                     Header: ['Content-Type', 'text/plain'],
                     end: 'Failed to send notification: ' + result.failed
                 };
             } else {
                 console.log('Notification sent successfully.');
-                return resp = {
+                resp = {
                     statusCode: 200,
                     Header: ['Content-Type', 'text/plain'],
                     end: 'Successfully sent the notification.'
@@ -76,12 +88,13 @@ function sendiOSNotification(Target, Title, Subtitle, Body) {
         })
         .catch(error => {
             console.error('Error sending notification:', error);
-            return resp = {
+            resp = {
                 statusCode: 400,
                 Header: ['Content-Type', 'text/plain'],
                 end: 'Error sending notification: ' + error
             };
         });
+    return resp;
 }
 
 module.exports = { sendNotification };

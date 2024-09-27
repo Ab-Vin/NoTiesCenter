@@ -27,6 +27,8 @@ const server = http.createServer((req, res) => {
 
             let resp = HandleRequest(req, ID, body, dateOfNotification);
 
+            console.log('resp report: \n ' + resp.statusCode + "\n " + resp.Header[0] + ',' + resp.Header[1] + '\n' + resp.end);
+
             res.statusCode = resp.statusCode;
             res.setHeader(resp.Header[0], resp.Header[1]);
             res.end(resp.end);
