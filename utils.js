@@ -17,8 +17,6 @@ function FindDeviceTokensForGroup(startDir) {
                 }
                 return Promise.resolve([]);
             });
-
-            // Flatten the results from all promises
             return Promise.all(promises).then(results => {
                 return results.flat();
             });
@@ -63,14 +61,14 @@ function readFilesInDirectory(directoryPath) {
                             return fs.readFile(filePath, 'utf8')
                                 .then(content => ({ name: file, content }));
                         }
-                        return null; // Skip directories
+                        return null;
                     });
             });
             return Promise.all(fileDetailsPromises).then(fileDetails => fileDetails.filter(Boolean));
         })
         .catch(err => {
             console.error('Error reading directory:', err);
-            throw err; // Ensure the promise is rejected
+            throw err;
         });
 }
 
@@ -86,7 +84,7 @@ function getDeviceTokenFromID(ID) {
                 .then(files => {
                     for (const file of files) {
                         if (file.name === 'DeviceToken.json') {
-                            return file.content.trim(); // Return the device token
+                            return file.content.trim();
                         }
                     }
 
@@ -96,7 +94,7 @@ function getDeviceTokenFromID(ID) {
         })
         .catch(err => {
             console.error('Error:', err);
-            throw err; // Ensure the promise is rejected
+            throw err;
         });
 }
 
@@ -111,20 +109,19 @@ function findUserByID(ID) {
                             if (file === ID) {
                                 return filePath;
                             }
-                            return findFolderByName(filePath, ID); // Assuming findFolderByName returns a promise
+                            return findFolderByName(filePath, ID);
                         }
                         return null;
                     });
             })
             return Promise.all(searchPromises)
                 .then(results => {
-                    // Find the first non-null result
                     return results.find(result => result !== null);
                 });
         })
         .catch(err => {
             console.error('Error:', err);
-            return null; // Handle errors and return null
+            return null;
         });
 }
 
