@@ -26,7 +26,7 @@ function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
                     sendiOSNotification(file.content, Title, Subtitle, Body);
                 });
                 console.log('Successfully sent the notification to all the people under the group ' + Targets);
-                return res = {
+                return resp = {
                     statusCode: 200,
                     Header: ['Content-Type', 'text/plain'],
                     end: 'Successfully sent the notification to all the people under the group ' + Targets
@@ -34,7 +34,7 @@ function sendNotification(Platform, Targets, Title, Subtitle, Body, date) {
             }); 
         }).catch(err => {
             console.error('Error: ', err);
-            return res = {
+            return resp = {
                 statusCode: 400,
                 Header: ['Content-Type', 'text/plain'],
                 end: 'Error' + err
@@ -60,14 +60,14 @@ function sendiOSNotification(Target, Title, Subtitle, Body) {
         .then(result => {
             if (result.failed.length > 0) {
                 console.error('Failed to send notification:', result.failed);
-                return res = {
+                return resp = {
                     statusCode: 400,
                     Header: ['Content-Type', 'text/plain'],
                     end: 'Failed to send notification: ' + result.failed
                 };
             } else {
                 console.log('Notification sent successfully.');
-                return res = {
+                return resp = {
                     statusCode: 200,
                     Header: ['Content-Type', 'text/plain'],
                     end: 'Successfully sent the notification.'
@@ -76,7 +76,7 @@ function sendiOSNotification(Target, Title, Subtitle, Body) {
         })
         .catch(error => {
             console.error('Error sending notification:', error);
-            return res = {
+            return resp = {
                 statusCode: 400,
                 Header: ['Content-Type', 'text/plain'],
                 end: 'Error sending notification: ' + error

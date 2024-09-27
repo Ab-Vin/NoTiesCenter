@@ -23,7 +23,7 @@ function HandleCreateDeviceToken(ID, body) {
 
             fileExists(filePath, (err, exists) => {
                 if (err) {
-                    return res = {
+                    return resp = {
                         statusCode: 500,
                         Header: ['Content-Type', 'text/plain'],
                         end: 'Error checking file existance'
@@ -31,7 +31,7 @@ function HandleCreateDeviceToken(ID, body) {
                 }
 
                 if (exists) {
-                    return res = {
+                    return resp = {
                         statusCode: 400,
                         Header: ['Content-Type', 'text/plain'],
                         end: 'File already exists'
@@ -40,7 +40,7 @@ function HandleCreateDeviceToken(ID, body) {
 
                 fs.mkdir(dirPath, { recursive: true }, err => {
                     if (err) {
-                        return res = {
+                        return resp = {
                             statusCode: 500,
                             Header: ['Content-Type', 'text/plain'],
                             end: 'Error creating directories'
@@ -49,13 +49,13 @@ function HandleCreateDeviceToken(ID, body) {
 
                     fs.writeFile(filePath, content, err => {
                         if (err) {
-                            return res = {
+                            return resp = {
                                 statusCode: 500,
                                 Header: ['Content-Type', 'text/plain'],
                                 end: 'Error writing file'
                             };
                         }
-                        return res = {
+                        return resp = {
                             statusCode: 200,
                             Header: ['Content-Type', 'text/plain'],
                             end: 'File created successfully'
@@ -64,7 +64,7 @@ function HandleCreateDeviceToken(ID, body) {
                 });
             });
         } else {
-            return res = {
+            return resp = {
                 statusCode: 400,
                 Header: ['Content-Type', 'text/plain'],
                 end: 'Invalid data'
@@ -72,7 +72,7 @@ function HandleCreateDeviceToken(ID, body) {
         }
     } catch (err) {
         console.error('Error parsing JSON:', err);
-        return res = {
+        return resp = {
             statusCode: 400,
             Header: ['Content-Type', 'text/plain'],
             end: 'Invalid JSON format'
@@ -99,14 +99,14 @@ function HandleSendNotification(body, date) {
                     if (token) {
                         sendNotification('IOS', token, outputJson.Title, outputJson.Subtitle, outputJson.Body, finalDate);
                         console.log('Successfully sent the notification to the person with the ID ' + value);
-                        return res = {
+                        return resp = {
                             statusCode: 200,
                             Header: ['Content-Type', 'text/plain'],
                             end: 'Successfully sent the notification to the person with the ID ' + value
                         };
                     } else {
                         console.error('Failed to find the person with the ID ' + value);
-                        return res = {
+                        return resp = {
                             statusCode: 400,
                             Header: ['Content-Type', 'text/plain'],
                             end: 'Failed to find the person with the ID ' + value
@@ -115,7 +115,7 @@ function HandleSendNotification(body, date) {
                 })
                 .catch(err => {
                     console.error('Error: ', err);
-                    return res = {
+                    return resp = {
                         statusCode: 400,
                         Header: ['Content-Type', 'text/plain'],
                         end: 'Error: ' + err
@@ -124,7 +124,7 @@ function HandleSendNotification(body, date) {
         }
     } catch (error) {
         console.error("Error parsing JSON:", error);
-        return res = {
+        return resp = {
             statusCode: 400,
             Header: ['Content-Type', 'text/plain'],
             end: 'Error parsing JSON: ' + error

@@ -28,7 +28,7 @@ const server = http.createServer((req, res) => {
             let resp = HandleRequest(req, ID, body, dateOfNotification);
 
             res.statusCode = resp.statusCode;
-            res.setHeader(resp.Header);
+            res.setHeader(resp.Header[0], resp.Header[1]);
             res.end(resp.end);
         });
     } else {
