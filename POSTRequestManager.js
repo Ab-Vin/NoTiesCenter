@@ -77,13 +77,20 @@ function HandleSendNotification(body, date) {
     try {
         const outputJson = JSON.parse(body);
 
+        let finalDate = "0"
+
+        if (date == null)
+            finalDate = Date.now();
+        else
+            Date.parse(date);
+
         if (!outputJson.IsSingleUser)
-            sendNotification("iOS", outputJson.Targets, outputJson.Title, outputJson.Subtitle, outputJson.Body, Date.parse(date));
+            sendNotification("iOS", outputJson.Targets, outputJson.Title, outputJson.Subtitle, outputJson.Body, finalDate);
         else {
             getDeviceTokenFromID(outputJson.Targets)
                 .then(token => {
                     if (token) {
-                        sendNotification('IOS', token, outputJson.Title, outputJson.Subtitle, outputJson.Body, Date.parse(date));
+                        sendNotification('IOS', token, outputJson.Title, outputJson.Subtitle, outputJson.Body, finalDate);
                         console.log('Successfully sent the notification to the person with the ID ' + value);
                     } else {
                         console.error('Failed to find the person with the ID ' + value);
