@@ -98,4 +98,4 @@ function HandleSendNotification(body, date) {
     }
 }
 
-module.exports { HandleRequest }
+module.exports = { HandleRequest }
